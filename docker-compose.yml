@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+
+  ## MySQL service DB source
+  mysql:
+    image: mysql:5.6.51
+    container_name: mysql_cdc
+    restart: always
+    environment:
+      MYSQL_DATABASE: source-db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: source-db
+      MYSQL_PASSWORD: source-db
+    ports:
+      - "3306:3306"
+    command:
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --binlog-do-db=source-db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./.docker/mysql/config/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./dbs/init-mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - default
+
+  ## Postgres service DB destination
+  postgres:
+    image: postgres:16.2
+    container_name: postgres_cdc
+    restart: always
+    environment:
+      POSTGRES_DB: destination-db
+      POSTGRES_USER: destination-db
+      POSTGRES_PASSWORD: destination-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./dbs/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_wal_senders=5"
+      - "-c"
+      - "max_replication_slots=5"
+    networks:
+      - default
+
+  zookeeper:
+    image: zookeeper:3.7.1
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    networks:
+      - default
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka
+    restart: always
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: CLIENT://:9092,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: CLIENT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: CLIENT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - default
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka_ui
+    restart: always
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    networks:
+      - default
+
+  debezium:
+    build:
+      dockerfile: ./.docker/debezium/Dockerfile
+    container_name: debezium
+    restart: always
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      PLUGIN_PATH: "/kafka/connect,/kafka/connect/plugins"
+      TOPIC_CREATION_ENABLE: "true"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      REST_ADVERTISED_HOST_NAME: debezium
+    ports:
+      - "8083:8083"
+    depends_on:
+      - kafka
+      - mysql
+      - postgres
+    links:
+      - kafka
+      - mysql
+      - postgres
+    volumes:
+      - ./.docker/debezium/connectors:/kafka/connect/connectors
+      - ./.docker/debezium/registry.sh:/debezium/registry.sh
+    networks:
+      - default
+
+  debezium-ui:
+    platform: linux/x86_64
+    image: debezium/debezium-ui:latest
+    container_name: debezium_ui
+    restart: always
+    environment:
+      KAFKA_CONNECT_URIS: http://debezium:8083
+    ports:
+      - "8081:8080"
+    depends_on:
+      - debezium
+    networks:
+      - default
+
+
+volumes:
+  mysql_data:
+  postgres_data:
+  kafka_data:
+
+networks:
+  default:

@@ -1,0 +1,47 @@
+{
+  "name": "mysql-source",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "tasks.max": "1",
+
+    "database.hostname": "mysql",
+    "database.port": "3306",
+    "database.user": "root",
+    "database.password": "root",
+    "database.server.id": "1",
+    "database.include.list": "source-db",
+    "table.include.list": "source-db.a_profile",
+
+    "topic.prefix": "mysql",
+    "database.history.kafka.topic": "history-changes",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+
+    "include.schema.changes": "true",
+    "schema.history.internal.kafka.topic": "schema-changes",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+
+    "database.history.skip.unparseable.ddl": "true",
+    "database.allowPublicKeyRetrieval": "true",
+    "database.serverTimezone": "UTC",
+
+    "snapshot.mode": "initial",
+    "snapshot.locking.mode": "minimal",
+    "snapshot.fetch.size": "1000",
+
+    "time.precision.mode": "adaptive_time_microseconds",
+    "decimal.handling.mode": "double",
+
+    "heartbeat.interval.ms": "10000",
+    "max.batch.size": "2048",
+    "max.queue.size": "8192",
+    "poll.interval.ms": "1000",
+
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.deadletterqueue.topic.name": "dlq-mysql-source",
+    "errors.deadletterqueue.topic.replication.factor": "1",
+
+    "include.query": "true",
+    "provide.transaction.metadata": "true"
+  }
+}

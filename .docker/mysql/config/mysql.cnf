@@ -1,0 +1,9 @@
+[mysqld]
+server-id=1
+log-bin=mysql-bin
+binlog_format=ROW
+binlog_row_image=FULL
+expire_logs_days=1
+gtid_mode=ON
+enforce-gtid-consistency=ON
+log-slave-updates=ON

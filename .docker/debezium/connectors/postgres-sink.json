@@ -1,0 +1,22 @@
+{
+    "name": "postgres-sink",
+    "config": {
+        "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+        "connection.url": "jdbc:postgresql://postgres:5432/destination-db",
+        "tasks.max": "1",
+        "connection.username": "destination-db",
+        "connection.password": "destination-db",
+        "insert.mode": "upsert",
+        "delete.enabled": "true",
+        "primary.key.mode": "record_key",
+        "schema.evolution": "basic",
+        "use.time.zone": "UTC",
+        "topics": "mysql.source-db.a_profile",
+        "auto.create": "false",
+        "auto.evolve": "true",
+        "transforms": "router",
+        "transforms.router.type": "org.apache.kafka.connect.transforms.RegexRouter",
+        "transforms.router.regex": "mysql\\.source-db\\.a_profile",
+        "transforms.router.replacement": "profiles"
+    }
+}
