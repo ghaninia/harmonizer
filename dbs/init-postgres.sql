@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS profiles (
-                                        id INT PRIMARY KEY,
-                                        name VARCHAR(255) NOT NULL,
+    id INT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    mobile VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

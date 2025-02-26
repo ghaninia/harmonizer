@@ -14,9 +14,31 @@
         "topics": "mysql.source-db.a_profile",
         "auto.create": "false",
         "auto.evolve": "true",
-        "transforms": "router",
+
+        "transforms": "unwrap,router,replacing,replacingVerified,replacingEmail,replacingMobile,casting",
+
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "transforms.unwrap.add.headers": "db",
+        "transforms.unwrap.delete.handling.mode": "rewrite",
+        "transforms.unwrap.drop.tombstones": "true",
+
         "transforms.router.type": "org.apache.kafka.connect.transforms.RegexRouter",
         "transforms.router.regex": "mysql\\.source-db\\.a_profile",
-        "transforms.router.replacement": "profiles"
+        "transforms.router.replacement": "profiles",
+
+        "transforms.replacing.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.replacing.include": "id,name,verified,mobile,email,created_at",
+
+        "transforms.replacingVerified.type": "io.yokota.kafka.connect.transform.jsonata.JsonataTransformation",
+        "transforms.replacingVerified.expr": "$merge([$, {'value': $merge([value, {'verified': (value.verified = 'Y' ? 'True' : 'False') }])}])",
+
+        "transforms.replacingEmail.type": "io.yokota.kafka.connect.transform.jsonata.JsonataTransformation",
+        "transforms.replacingEmail.expr": "$merge([$, {'value': $merge([value, {'email': $lowercase(value.email)}])}])",
+
+        "transforms.replacingMobile.type": "io.yokota.kafka.connect.transform.jsonata.JsonataTransformation",
+        "transforms.replacingMobile.expr": "$merge([$, {'value': $merge([value, {'mobile': $replace(value.mobile, /^\\+989/, '09') }])}])",
+
+        "transforms.casting.type": "org.apache.kafka.connect.transforms.Cast$Value",
+        "transforms.casting.spec": "id:int32, name:string, verified:boolean, mobile:string, email:string"
     }
 }

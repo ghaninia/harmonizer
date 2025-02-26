@@ -59,7 +59,8 @@ docker exec -it mysql_cdc /bin/sh -c "mysql -u root -p"
 
 2. Create a new database:
 ```sql
-INSERT INTO a_profile(id, name, email, created_at) values (1, 'Amin', 'info@ghaninia.ir', NOW());
+INSERT INTO a_profile(id, name,verified, mobile, email, created_at) values
+                                                       (1, 'Amin', 'Y', '+989119119191', 'INFO@Ghaninia.ir', NOW());
 ```
 
 3. Open PostgreSQL Connection with the following command:

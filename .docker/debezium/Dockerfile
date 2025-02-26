@@ -13,6 +13,11 @@ RUN unzip kafka-connect-jdbc.zip && \
 RUN echo "Downloading Postgres Driver"
 RUN curl -L -o postgresql-42.7.2.jar https://jdbc.postgresql.org/download/postgresql-42.7.2.jar
 
-# Copy the PostgreSQL JDBC driver to the correct location
 RUN mkdir -p /kafka/connect/jdbc
 RUN mv postgresql-42.7.2.jar /kafka/connect/jdbc
+
+# install JSONata Transform plugin
+RUN echo "Start downloading JSONata Transform plugin"
+RUN curl -L -o rayokota-kafka-connect-jsonata-0.1.0.zip  https://hub-downloads.confluent.io/api/plugins/rayokota/kafka-connect-jsonata/versions/0.1.0/rayokota-kafka-connect-jsonata-0.1.0.zip
+RUN unzip rayokota-kafka-connect-jsonata-0.1.0.zip && \
+    rm rayokota-kafka-connect-jsonata-0.1.0.zip
